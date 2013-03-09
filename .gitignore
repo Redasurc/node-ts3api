@@ -1,4 +1,6 @@
 /bin/lib
+jsdoc
+doc
 node_modules
 test-output.tmp
 *swp

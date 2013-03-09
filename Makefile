@@ -17,13 +17,18 @@ test: ;@echo "Testing ${PROJECT}....."; \
 
 install: ;@echo "Installing ${PROJECT}....."; \
 	npm install
+	git clone git@github.com:jsdoc3/jsdoc.git
 
 update: ;@echo "Updating ${PROJECT}....."; \
 	git pull --rebase; \
 	npm install
 
-clean: ;
+doc: ;@echo "Creating jsdoc dokumentation in folder doc"; \
+	jsdoc/jsdoc lib/main.js --destination doc
+
+clean: ;@echo "Removing uneccesary folders ${PROJECT}....."; \
 	rm -rf node_modules
+	rm -rf jsdoc
 
 
 .PHONY: test install clean update
