@@ -1,0 +1,40 @@
+{
+  "name": "node-ts3api",
+  "preferGlobal": false,
+  "version": "0.0.1",
+  "author": "Redasurc <redasurc@stg-gaming.eu>",
+  "description": "A TS3 serverquery API for nodejs",
+  "contributors": [
+    {
+      "name": "Meier49",
+      "email": "meier49@stg-gaming.eu"
+    }
+  ],
+  "scripts": {
+    "test": "mocha"
+  },
+  "main": "./lib/main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Redasurc/node-ts3api.git"
+  },
+  "keywords": [
+    "ts3",
+    "api",
+    "teamspeak"
+  ],
+  "dependencies" : {
+    "cli-color": "0.2.1",
+    "ts3sq"    : "0.1.2"
+  },
+  "analyze": false,
+  "devDependencies": {
+    "mocha"    : "1.8.1"
+  },
+  "bundledDependencies": [
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=0.6.12"
+  }
+}

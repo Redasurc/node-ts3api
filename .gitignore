@@ -1,0 +1,6 @@
+/bin/lib
+node_modules
+test-output.tmp
+*swp
+*un~
+.DS_Store
