@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: main.js</title>
+    
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+    
+    <h1 class="page-title">Source: main.js</h1>
+    
+    
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source"><code>var ts3sq = require('ts3sq'),
+    events = require('events'),
+    Util = require('Util');
+
+module.exports = factory;
+Util.inherits(ts3api, events.EventEmitter);
+/*-
+  * Factory for ts3api class
+  * @param {string} ip The teamspeak server ip
+  * @param {number} port The ts3 serverquery port
+  * @param {function} callback The callback which is executed after object creation
+  * @return {ts3api} The api object
+  */
+function factory(ip, port, callback){
+    return new ts3api(ip, port, callback);
+}
+/**
+  * The ts3 api constructor
+  * @constructor
+  * @param {string} ip The teamspeak server ip
+  * @param {number} port The ts3 serverquery port
+  * @param {function} callback The callback which is executed after object creation
+  * @return {ts3api} The api object
+  */
+function ts3api(ip, port, callback){
+    events.EventEmitter.call(this);
+
+    var self = this;
+    var client = new ts3sq.ServerQuery(ip, port);
+
+    /**
+      * Execute command directly over serverquery and get answer as an object
+      * @param {string} command The command to be executed
+      * @param {object} args An object that contains the args and values in key - value pairs. Parameters go into the parameter array.
+      * @param {function} callback Callback function - Serveranswer as an object in first parameter
+      * @return this for command chains
+      * @throws {error} sq command unknown
+      */
+    this.execute = function(command, args, callback){
+        var sqarguments = "";
+        var sqparameters = "";
+        if(typeof args == "function"){
+            callback = args;
+            args = [];
+        }else{
+            if(typeof args == 'object'){
+                for(var b in args){
+                    if(b != "parameter"){
+                        sqarguments += b + "=" + this.escapeString(args[b]) + " ";
+                    }else{
+                        for(var c in args[b]){
+                            sqparameters += args[b][c] + " ";
+                        }
+                    }
+                }
+            }
+        }
+        if(validCommands.indexOf(command) > -1){
+            client.execute(command + ' ' + sqarguments + sqparameters, function(element){
+                var err = false;
+                if(element.err[0].id === 0) err = true;
+                if(typeof callback == "function") callback(element, err);
+            });
+        }else{
+            throw new Error('sq command unknown');
+        }
+        return this;
+    };
+
+    /**
+      * Register tsserver events (which will fire notrify events)
+      * @param {string} param which events to register. Left blank will register all.
+      * (possible param: server, textchannel, textprivate, textserver, text)
+      */
+    this.registerEvents = function(param){
+        switch(param){
+            case 'server':
+                self.execute('servernotifyregister', {event: 'server'});
+                break;
+            case 'textchannel':
+                self.execute('servernotifyregister', {event: 'textchannel'});
+                break;
+            case 'textprivate':
+                self.execute('servernotifyregister', {event: 'textprivate'});
+                break;
+            case 'textserver':
+                self.execute('servernotifyregister', {event: 'textserver'});
+                break;
+            case 'text':
+                self.registerEvents('textserver');
+                self.registerEvents('textchannel');
+                self.registerEvents('textprivate');
+                break;
+            default:
+                self.registerEvents('server');
+                self.registerEvents('text');
+                break;
+        }
+        // Channel events are heavy buggy so i dont implement them
+    };
+
+    /**
+      * Enhanced string escaping (originaly from ts3sq module)
+      * @param {string} string unescaped string
+      * @return {string} The escaped string
+      */
+    this.escapeString= function(string) {
+        if(typeof string == 'string'){
+            string = string.replace(/\u005C/g, '\u005C\u005C'); // escape \
+            string = string.replace(/\u002F/g, '\u005C\u002F'); // escape /
+            string = string.replace(/\u0020/g, '\u005C\u0073'); // escape " " (space)
+            string = string.replace(/\u007C/g, '\u005C\u0070'); // escape |
+            string = string.replace(/\u0007/g, '\u005C\u0061'); // escape Bell
+            string = string.replace(/\u0008/g, '\u005C\u0062'); // escape Backspace
+            string = string.replace(/\u000C/g, '\u005C\u0066'); // escape Formfeed
+            string = string.replace(/\u000A/g, '\u005C\u006e'); // escape Newline
+            string = string.replace(/\u000D/g, '\u005C\u0072'); // escape Carriage Return
+            string = string.replace(/\u0009/g, '\u005C\u0074'); // escape Horizontal Tab
+            string = string.replace(/\u000B/g, '\u005C\u0076'); // escape Vertical Tab
+        }
+        return string;
+    };
+
+
+
+    /*
+     * EVENTS:
+     */
+
+    client.on('ready', function() { self.emit('ready'); });
+    client.on('close', function(whyyy) { self.emit('close', whyyy); });
+    client.on('error', function(error) { self.emit('error', error); });
+    client.on('notify', function(object){
+        switch(object.type){
+            case 'notifytextmessage':
+                self.emit('textmessage', object.body[0]);
+                break;
+        }
+        self.emit('notrify', object);
+    });
+
+
+    if(typeof callback == "function"){
+        callback();
+    }
+    /**
+  * a list of valid ts3sq commands
+  */
+var validCommands = ['help', 'quit', 'login', 'logout', 'version', 'hostinfo', 'instanceinfo', 'instanceedit', 'bindinglist',
+    'use', 'serverlist', 'serveridgetbyport', 'serverdelete', 'servercreate', 'serverstart', 'serverstop',
+    'serverprocessstop', 'serverinfo', 'serverrequestconnectioninfo', 'serveredit', 'servergrouplist', 'servergroupadd',
+    'servergroupdel', 'servergroupcopy', 'servergrouprename', 'servergrouppermlist', 'servergroupaddperm',
+    'servergroupdelperm', 'servergroupaddclient', 'servergroupdelclient', 'servergroupclientlist', 'servergroupsbyclientid',
+    'servergroupautoaddperm', 'servergroupautodelperm', 'serversnapshotcreate', 'serversnapshotdeploy', 'servernotifyregister',
+    'servernotifyunregister', 'sendtextmessage', 'logview', 'logadd', 'gm', 'channellist', 'channelinfo', 'channelfind',
+    'channelmove', 'channelcreate', 'channeldelete', 'channeledit', 'channelgrouplist', 'channelgroupadd', 'channelgroupdel',
+    'channelgroupcopy', 'channelgrouprename', 'channelgroupaddperm', 'channelgrouppermlist', 'channelgroupdelperm',
+    'channelgroupclientlist', 'setclientchannelgroup', 'channelpermlist', 'channeladdperm', 'channeldelperm', 'clientlist',
+    'clientinfo', 'clientfind', 'clientedit', 'clientdblist', 'clientdbinfo', 'clientdbfind', 'clientdbedit',
+    'clientdbdelete', 'clientgetids', 'clientgetdbidfromuid', 'clientgetnamefromuid', 'clientgetnamefromdbid',
+    'clientsetserverquerylogin', 'clientupdate', 'clientmove', 'clientkick', 'clientpoke', 'clientpermlist', 'clientaddperm',
+    'clientdelperm', 'channelclientpermlist', 'channelclientaddperm', 'channelclientdelperm', 'permissionlist',
+    'permidgetbyname', 'permoverview', 'permget', 'permfind', 'permreset', 'privilegekeylist', 'privilegekeyadd',
+    'privilegekeydelete', 'privilegekeyuse', 'messagelist', 'messageadd', 'messagedel', 'messageget', 'messageupdateflag',
+    'complainlist', 'complainadd', 'complaindelall', 'complaindel', 'banclient', 'banlist', 'banadd', 'bandel', 'bandelall',
+    'ftinitupload', 'ftinitdownload', 'ftlist', 'ftgetfilelist', 'ftgetfileinfo', 'ftstop', 'ftdeletefile', 'ftcreatedir',
+    'ftrenamefile', 'customsearch', 'custominfo', 'whoami'];
+
+}
+
+
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="ts3api.html">ts3api</a></li></ul>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0-dev</a> on Sat Mar 09 2013 04:17:28 GMT+0100 (MEZ)
+</footer>
+
+<script> prettyPrint(); </script>
+</body>
+</html>
