@@ -16,15 +16,14 @@ test: ;@echo "Testing ${PROJECT}....."; \
 	./node_modules/mocha/bin/mocha;
 
 install: ;@echo "Installing ${PROJECT}....."; \
-	npm install \
-	git clone git@github.com:jsdoc3/jsdoc.git
+	npm install
 
 update: ;@echo "Updating ${PROJECT}....."; \
 	git pull --rebase; \
 	npm install
 
 doc: ;@echo "Creating jsdoc dokumentation in folder doc"; \
-	jsdoc/jsdoc lib/main.js --destination doc \
+	node_modules/jsdoc/jsdoc lib/main.js --destination doc \
 	rm -rf doc/scripts \
 	rm doc/styles/prettify-jsdoc.css \
 	rm doc/styles/prettify-tomorrow.css \
@@ -32,8 +31,7 @@ doc: ;@echo "Creating jsdoc dokumentation in folder doc"; \
 	mv doc/ts3api.html doc/documentation.html
 
 clean: ;@echo "Removing uneccesary folders ${PROJECT}....."; \
-	rm -rf node_modules \
-	rm -rf jsdoc
+	rm -rf node_modules
 
 
 .PHONY: test install clean update
