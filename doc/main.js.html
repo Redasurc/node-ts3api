@@ -25,31 +25,32 @@
     
     <section>
         <article>
-            <pre class="prettyprint source"><code>var ts3sq = require('ts3sq'),
+            <pre class="prettyprint source"><code>/** @module ts3api_factory */
+var ts3sq = require('ts3sq'),
     events = require('events'),
     Util = require('Util');
 
-module.exports = factory;
-Util.inherits(ts3api, events.EventEmitter);
-/*-
+/**
   * Factory for ts3api class
-  * @param {string} ip The teamspeak server ip
-  * @param {number} port The ts3 serverquery port
-  * @param {function} callback The callback which is executed after object creation
-  * @return {ts3api} The api object
+  * @param {string} ip The teamspeak server ip.
+  * @param {number} port The ts3 serverquery port.
+  * @param {function} callback The callback which is executed after object creation.
+  * @return {ts3api} The api object.
   */
-function factory(ip, port, callback){
+module.exports = function(ip, port, callback) {
     return new ts3api(ip, port, callback);
-}
+};
+
+Util.inherits(ts3api, events.EventEmitter);
+
 /**
   * The ts3 api constructor
   * @constructor
-  * @param {string} ip The teamspeak server ip
-  * @param {number} port The ts3 serverquery port
-  * @param {function} callback The callback which is executed after object creation
-  * @return {ts3api} The api object
+  * @param {string} ip The teamspeak server ip.
+  * @param {number} port The ts3 serverquery port.
+  * @param {function} callback The callback which is executed after object creation.
   */
-function ts3api(ip, port, callback){
+function ts3api(ip, port, callback) {
     events.EventEmitter.call(this);
 
     var self = this;
@@ -57,38 +58,38 @@ function ts3api(ip, port, callback){
 
     /**
       * Execute command directly over serverquery and get answer as an object
-      * @param {string} command The command to be executed
+      * @param {string} command The command to be executed.
       * @param {object} args An object that contains the args and values in key - value pairs. Parameters go into the parameter array.
-      * @param {function} callback Callback function - Serveranswer as an object in first parameter
-      * @return this for command chains
-      * @throws {error} sq command unknown
+      * @param {function} callback Callback function - Serveranswer as an object in first parameter.
+      * @return {ts3api} this for command chains.
+      * @throws {error} sq command unknown.
       */
-    this.execute = function(command, args, callback){
-        var sqarguments = "";
-        var sqparameters = "";
-        if(typeof args == "function"){
+    this.execute = function(command, args, callback) {
+        var sqarguments = '';
+        var sqparameters = '';
+        if (typeof args == 'function') {
             callback = args;
             args = [];
-        }else{
-            if(typeof args == 'object'){
-                for(var b in args){
-                    if(b != "parameter"){
-                        sqarguments += b + "=" + this.escapeString(args[b]) + " ";
-                    }else{
-                        for(var c in args[b]){
-                            sqparameters += args[b][c] + " ";
+        } else {
+            if (typeof args == 'object') {
+                for (var b in args) {
+                    if (b != 'parameter') {
+                        sqarguments += b + '=' + this.escapeString(args[b]) + ' ';
+                    } else {
+                        for (var c in args[b]) {
+                            sqparameters += args[b][c] + ' ';
                         }
                     }
                 }
             }
         }
-        if(validCommands.indexOf(command) > -1){
-            client.execute(command + ' ' + sqarguments + sqparameters, function(element){
+        if (validCommands.indexOf(command) > -1) {
+            client.execute(command + ' ' + sqarguments + sqparameters, function(element) {
                 var err = false;
-                if(element.err[0].id === 0) err = true;
-                if(typeof callback == "function") callback(element, err);
+                if (element.err[0].id === 0) err = true;
+                if (typeof callback == 'function') callback(element, err);
             });
-        }else{
+        } else {
             throw new Error('sq command unknown');
         }
         return this;
@@ -97,10 +98,10 @@ function ts3api(ip, port, callback){
     /**
       * Register tsserver events (which will fire notrify events)
       * @param {string} param which events to register. Left blank will register all.
-      * (possible param: server, textchannel, textprivate, textserver, text)
+      * (possible param: server, textchannel, textprivate, textserver, text).
       */
-    this.registerEvents = function(param){
-        switch(param){
+    this.registerEvents = function(param) {
+        switch (param) {
             case 'server':
                 self.execute('servernotifyregister', {event: 'server'});
                 break;
@@ -128,11 +129,11 @@ function ts3api(ip, port, callback){
 
     /**
       * Enhanced string escaping (originaly from ts3sq module)
-      * @param {string} string unescaped string
-      * @return {string} The escaped string
+      * @param {string} string unescaped string.
+      * @return {string} The escaped string.
       */
-    this.escapeString= function(string) {
-        if(typeof string == 'string'){
+    this.escapeString = function(string) {
+        if (typeof string == 'string') {
             string = string.replace(/\u005C/g, '\u005C\u005C'); // escape \
             string = string.replace(/\u002F/g, '\u005C\u002F'); // escape /
             string = string.replace(/\u0020/g, '\u005C\u0073'); // escape " " (space)
@@ -157,8 +158,8 @@ function ts3api(ip, port, callback){
     client.on('ready', function() { self.emit('ready'); });
     client.on('close', function(whyyy) { self.emit('close', whyyy); });
     client.on('error', function(error) { self.emit('error', error); });
-    client.on('notify', function(object){
-        switch(object.type){
+    client.on('notify', function(object) {
+        switch (object.type) {
             case 'notifytextmessage':
                 self.emit('textmessage', object.body[0]);
                 break;
@@ -167,7 +168,7 @@ function ts3api(ip, port, callback){
     });
 
 
-    if(typeof callback == "function"){
+    if (typeof callback == 'function') {
         callback();
     }
     /**
@@ -206,13 +207,13 @@ var validCommands = ['help', 'quit', 'login', 'logout', 'version', 'hostinfo', '
 </div>
 
 <nav>
-    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="ts3api.html">ts3api</a></li></ul>
+    <h2><a href="index.html">Index</a></h2><h3>Modules</h3><ul><li><a href="module-ts3api_factory.html#module:ts3api_factory">ts3api_factory</a></li></ul><h3>Classes</h3><ul><li><a href="d262a10ef5.html">ts3api</a></li></ul>
 </nav>
 
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0-dev</a> on Sat Mar 09 2013 04:17:28 GMT+0100 (MEZ)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.1.1</a> on Mon Mar 11 2013 00:13:35 GMT+0100 (MEZ)
 </footer>
 
 <script> prettyPrint(); </script>

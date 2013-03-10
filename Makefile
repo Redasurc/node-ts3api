@@ -23,12 +23,8 @@ update: ;@echo "Updating ${PROJECT}....."; \
 	npm install
 
 doc: ;@echo "Creating jsdoc dokumentation in folder doc"; \
-	node_modules/jsdoc/jsdoc lib/main.js --destination doc \
-	rm -rf doc/scripts \
-	rm doc/styles/prettify-jsdoc.css \
-	rm doc/styles/prettify-tomorrow.css \
-	rm doc/index.html \
-	mv doc/ts3api.html doc/documentation.html
+	rm -rf ./doc; \
+	node_modules/jsdoc/jsdoc --destination doc lib/main.js -c ./jsdoc_conf.json ./README.md
 
 clean: ;@echo "Removing uneccesary folders ${PROJECT}....."; \
 	rm -rf node_modules
