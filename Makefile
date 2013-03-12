@@ -13,7 +13,11 @@ debug: ;@echo "Debugging ${PROJECT}.....http://0.0.0.0:8080/debug?port=5858 to s
 
 test: ;@echo "Testing ${PROJECT}....."; \
 	export NODE_PATH=.; \
-	./node_modules/mocha/bin/mocha;
+	./node_modules/mocha/bin/mocha --ignore-leaks ./test/unitTest.js;
+
+dtest: ;@echo "Testing ${PROJECT}....."; \
+	export NODE_PATH=.; \
+	node-inspector & ./node_modules/mocha/bin/mocha --debug-brk --ignore-leaks ./test/unitTest.js; 
 
 install: ;@echo "Installing ${PROJECT}....."; \
 	npm install
